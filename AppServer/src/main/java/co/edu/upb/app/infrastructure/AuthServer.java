@@ -15,7 +15,7 @@ public class AuthServer implements InterfaceAuth {
 
     public AuthServer () {
         try {
-            this.service = (InterfaceAuth) Naming.lookup("rmi" + Environment.getInstance().getDotenv().get("AUTH_URL"));
+            this.service = (InterfaceAuth) Naming.lookup("rmi://" + Environment.getInstance().getDotenv().get("AUTH_URL"));
         } catch (NotBoundException | MalformedURLException | RemoteException e) {
             throw new RuntimeException(e);
         }
