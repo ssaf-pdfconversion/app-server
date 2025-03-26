@@ -20,7 +20,15 @@ import jakarta.jws.WebService;
 )
 public class AppManager implements InterfaceApp {
 
-    public AppManager(IAuthManager authManager, IConversionManager conversionManager, IMetricsManager metricsManager){}
+    private final IAuthManager authManager;
+    private final IConversionManager conversionManager;
+    private final IMetricsManager metricsManager;
+
+    public AppManager(IAuthManager authManager, IConversionManager conversionManager, IMetricsManager metricsManager){
+        this.authManager = authManager;
+        this.conversionManager = conversionManager;
+        this.metricsManager = metricsManager;
+    }
 
     @Override
     @WebMethod
