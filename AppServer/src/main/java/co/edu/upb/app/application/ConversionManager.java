@@ -18,6 +18,7 @@ public class ConversionManager implements IConversionManager, InterfacePublisher
 
     public ConversionManager(IMetricsManager metricsManager){
         this.metricsManager = metricsManager;
+        this.nodes = new ArrayList<>();
     }
 
 

@@ -12,17 +12,18 @@ import java.rmi.registry.LocateRegistry;
 public class NodeRegistry {
 
     private final String port;
-    private InterfacePublisher service;
+    private final InterfacePublisher service;
 
     public NodeRegistry(InterfacePublisher conversionManager) {
         this.port = Environment.getInstance().getDotenv().get("REGISTRY_PORT");
+        this.service = conversionManager;
     }
 
     public void run() {
         try {
             LocateRegistry.createRegistry(Integer.parseInt(port));
             try {
-                Naming.rebind("//127.0.0.1:"+port+"/song", service);
+                Naming.rebind("//127.0.0.1:"+port+"/registry", service);
             } catch (RemoteException | MalformedURLException e) {
                 e.printStackTrace();
             }
