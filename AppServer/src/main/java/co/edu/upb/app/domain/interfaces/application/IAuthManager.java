@@ -1,7 +1,9 @@
 package co.edu.upb.app.domain.interfaces.application;
 
+import co.edu.upb.app.domain.models.AppResponse;
+
 public interface IAuthManager {
-    public String register(String username, String password, String nombre, String apellido, String email);
-    public String login(String username, String password);
-    public Boolean validateJWT(String JWT);
+    public AppResponse<String> register(String username, String password, String nombre, String apellido, String email);
+    public AppResponse<String>  login(String username, String password);
+    public AppResponse<Boolean>  validateJWT(String JWT);
 }

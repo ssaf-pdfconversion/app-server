@@ -2,6 +2,7 @@ package co.edu.upb.app.application;
 
 import co.edu.upb.app.domain.interfaces.application.IAuthManager;
 import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceAuth;
+import co.edu.upb.app.domain.models.AppResponse;
 
 public class AuthManager implements IAuthManager {
 
@@ -12,17 +13,17 @@ public class AuthManager implements IAuthManager {
     }
 
     @Override
-    public String register(String username, String password, String nombre, String apellido, String email) {
+    public AppResponse<String> register(String username, String password, String nombre, String apellido, String email) {
         return null;
     }
 
     @Override
-    public String login(String username, String password){
+    public AppResponse<String>  login(String username, String password){
         return null;
     }
 
     @Override
-    public Boolean validateJWT(String JWT) {
+    public AppResponse<Boolean>  validateJWT(String JWT) {
         return null;
     }
 }

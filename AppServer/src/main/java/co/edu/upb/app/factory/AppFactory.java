@@ -8,7 +8,7 @@ import co.edu.upb.app.config.Environment;
 import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceAuth;
 import co.edu.upb.app.infrastructure.AppServer;
 import co.edu.upb.app.infrastructure.NodeRegistry;
-import co.edu.upb.app.infrastructure.StorageServer;
+import co.edu.upb.app.infrastructure.StorageClient;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -21,7 +21,7 @@ public class AppFactory {
     private final MetricsManager metricsManager;
 
     public AppFactory(){
-        StorageServer storageServer = new StorageServer();
+        StorageClient storageServer = new StorageClient();
         this.metricsManager = new MetricsManager(storageServer);
         this.conversionManager = new ConversionManager(metricsManager);
     }

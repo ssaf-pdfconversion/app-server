@@ -8,12 +8,12 @@ import co.edu.upb.app.domain.models.Statistics;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 
-public class StorageServer implements InterfaceStorage {
+public class StorageClient implements InterfaceStorage {
 
     private final HttpClient client;
     private final String url;
 
-    public StorageServer(){
+    public StorageClient(){
         this.client = HttpClient.newHttpClient();
         this.url = Environment.getInstance().getDotenv().get("STORAGE_URL");
     }
