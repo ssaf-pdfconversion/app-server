@@ -1,10 +1,7 @@
 package co.edu.upb.app.domain.interfaces.infrastructure;
 
 import co.edu.upb.app.domain.models.StatsFilter;
-import co.edu.upb.app.domain.models.soapResponse.SOAPBResponse;
-import co.edu.upb.app.domain.models.soapResponse.SOAPDResponse;
-import co.edu.upb.app.domain.models.soapResponse.SOAPSResponse;
-import co.edu.upb.app.domain.models.soapResponse.SOAPStatsResponse;
+import co.edu.upb.app.domain.models.soapResponse.*;
 import jakarta.jws.WebMethod;
 import jakarta.jws.WebService;
 
@@ -20,10 +17,10 @@ public interface InterfaceApp {
     public SOAPBResponse validate(String jwt);
 
     @WebMethod
-    public SOAPSResponse getOfficeConversion(String[] files);
+    public SOAPASResponse getOfficeConversion(String[] files);
 
     @WebMethod
-    public SOAPSResponse getURLConversion(String[] urls);
+    public SOAPASResponse getURLConversion(String[] urls);
 
     @WebMethod
     public SOAPDResponse getTotalConversion(Integer userId);
