@@ -4,13 +4,15 @@ import co.edu.upb.app.domain.interfaces.application.IAuthManager;
 import co.edu.upb.app.domain.interfaces.application.IConversionManager;
 import co.edu.upb.app.domain.interfaces.application.IMetricsManager;
 import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceApp;
+import co.edu.upb.app.domain.models.AppResponse;
+import co.edu.upb.app.domain.models.Statistics;
 import co.edu.upb.app.domain.models.StatsFilter;
-import co.edu.upb.app.domain.models.soapResponse.SOAPBResponse;
-import co.edu.upb.app.domain.models.soapResponse.SOAPDResponse;
-import co.edu.upb.app.domain.models.soapResponse.SOAPSResponse;
-import co.edu.upb.app.domain.models.soapResponse.SOAPStatsResponse;
+import co.edu.upb.app.domain.models.soapResponse.*;
 import jakarta.jws.WebMethod;
 import jakarta.jws.WebService;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @WebService(
         endpointInterface = "co.edu.upb.app.domain.interfaces.infrastructure.InterfaceApp",
@@ -33,42 +35,69 @@ public class AppManager implements InterfaceApp {
     @Override
     @WebMethod
     public SOAPSResponse login(String username, String password) {
-        return null;
+        System.out.println("Ejecutando login con timestamp " + getNowTimestamp());
+
+        AppResponse<String> appResponse = this.authManager.login(username, password);
+        return new SOAPSResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para login", appResponse.getData(), getNowTimestamp());
     }
 
     @Override
     @WebMethod
     public SOAPSResponse register(String username, String password, String nombre, String apellido, String email) {
-        return null;
+        System.out.println("Ejecutando register con timestamp " + getNowTimestamp());
+
+        AppResponse<String> appResponse = this.authManager.register(username, password, nombre, apellido, email);
+        return new SOAPSResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para register", appResponse.getData(), getNowTimestamp());
     }
 
     @Override
     @WebMethod
     public SOAPBResponse validate(String jwt) {
-        return null;
+        System.out.println("Ejecutando validate con timestamp " + getNowTimestamp());
+
+        AppResponse<Boolean> appResponse = this.authManager.validateJWT(jwt);
+        return new SOAPBResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para validate", appResponse.getData(), getNowTimestamp());
     }
 
     @Override
     @WebMethod
-    public SOAPSResponse getOfficeConversion(String[] files) {
-        return null;
+    public SOAPASResponse getOfficeConversion(String[] files) {
+        System.out.println("Ejecutando office conversion con timestamp " + getNowTimestamp());
+
+        AppResponse<String[]> appResponse = this.conversionManager.queueOfficeConversion(files);
+        return new SOAPASResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para conversión Office", appResponse.getData(), getNowTimestamp());
     }
 
     @Override
     @WebMethod
-    public SOAPSResponse getURLConversion(String[] urls) {
-        return null;
+    public SOAPASResponse getURLConversion(String[] urls) {
+        System.out.println("Ejecutando URL conversion con timestamp " + getNowTimestamp());
+
+        AppResponse<String[]> appResponse = this.conversionManager.queueURLConversion(urls);
+        return new SOAPASResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para conversión URL", appResponse.getData(), getNowTimestamp());
     }
 
     @Override
     @WebMethod
     public SOAPDResponse getTotalConversion(Integer userId) {
-        return null;
+        System.out.println("Ejecutando getTotalConversion con timestamp " + getNowTimestamp());
+
+        Double appResponse = this.metricsManager.getTotalConversion(userId);
+        return new SOAPDResponse(true, "Este es un mensaje de éxito para obtención del total de conversión", appResponse, getNowTimestamp());
     }
 
     @Override
     @WebMethod
     public SOAPStatsResponse getStatistics(Integer userId, StatsFilter filter) {
-        return null;
+        System.out.println("Ejecutando getStatistics con timestamp " + getNowTimestamp());
+
+        Statistics appResponse = this.metricsManager.getStatistics(userId, filter.getStartDate(), filter.getEndDate(), filter.getFileTypeId());
+            return new SOAPStatsResponse(true, "Este es un mensaje de éxito para obtención de las estadísticas", appResponse, getNowTimestamp());
+    }
+
+    private String getNowTimestamp(){
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
+        return now.format(formatter);
     }
 }

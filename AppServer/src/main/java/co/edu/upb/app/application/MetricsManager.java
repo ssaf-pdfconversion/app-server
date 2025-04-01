@@ -8,7 +8,7 @@ import co.edu.upb.app.domain.models.Statistics;
 
 public class MetricsManager implements IMetricsManager {
 
-    private InterfaceStorage storage;
+    private final InterfaceStorage storage;
 
     public MetricsManager(InterfaceStorage storage){
         this.storage=storage;
@@ -16,16 +16,16 @@ public class MetricsManager implements IMetricsManager {
 
     @Override
     public Boolean storeMetadata(Metadata data) {
-        return null;
+        return storage.storeMetadata(data).body();
     }
 
     @Override
     public Double getTotalConversion(int userId) {
-        return 0.0;
+        return storage.getTotalConversion(userId).body();
     }
 
     @Override
     public Statistics getStatistics(int userId, String startDate, String endDate, Integer fileTypeId) {
-        return null;
+        return storage.getStatistics(userId, startDate, endDate, fileTypeId).body();
     }
 }
