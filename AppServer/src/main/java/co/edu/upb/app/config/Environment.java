@@ -9,7 +9,9 @@ public class Environment {
     private Dotenv dotenv;
 
     private Environment(){
-        this.dotenv = Dotenv.load();
+        dotenv = Dotenv.configure()
+                .filename(".env")
+                .load();
     }
 
     public static Environment getInstance(){
