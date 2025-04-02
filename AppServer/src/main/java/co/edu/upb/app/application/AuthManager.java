@@ -1,7 +1,7 @@
 package co.edu.upb.app.application;
 
 import co.edu.upb.app.domain.interfaces.application.IAuthManager;
-import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceAuth;
+import co.edu.upb.authServer.Interfaces.InterfaceAuth;
 import co.edu.upb.app.domain.models.AppResponse;
 
 import java.rmi.RemoteException;
@@ -24,7 +24,7 @@ public class AuthManager implements IAuthManager {
     }
 
     @Override
-    public AppResponse<String>  login(String username, String password){
+    public AppResponse<String> login(String username, String password){
         try {
             return this.auth.login(username, password);
         } catch (RemoteException e) {
@@ -33,7 +33,7 @@ public class AuthManager implements IAuthManager {
     }
 
     @Override
-    public AppResponse<Boolean>  validateJWT(String JWT) {
+    public AppResponse<Boolean> validateJWT(String JWT) {
         try {
             return this.auth.validateJWT(JWT);
         } catch (RemoteException e) {
