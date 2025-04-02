@@ -8,16 +8,18 @@ public class Environment {
 
     private Dotenv dotenv;
 
-    private Environment(){
+    private Environment() {
+        String configDir = System.getProperty("config.dir", "/home/appserver/environment");
         dotenv = Dotenv.configure()
+                .directory(configDir)
                 .filename(".env")
                 .load();
     }
 
-    public static Environment getInstance(){
-        if(instance == null){
-            synchronized (Environment.class){
-                if(instance==null){
+    public static Environment getInstance() {
+        if (instance == null) {
+            synchronized (Environment.class) {
+                if (instance == null) {
                     instance = new Environment();
                 }
             }
@@ -25,7 +27,7 @@ public class Environment {
         return instance;
     }
 
-    public Dotenv getDotenv(){
+    public Dotenv getDotenv() {
         return this.dotenv;
     }
 }
