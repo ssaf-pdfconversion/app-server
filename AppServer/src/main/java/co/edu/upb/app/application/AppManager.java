@@ -10,8 +10,7 @@ import co.edu.upb.app.domain.models.StatsFilter;
 import co.edu.upb.app.domain.models.soapResponse.*;
 import jakarta.jws.WebMethod;
 import jakarta.jws.WebService;
-
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 @WebService(
@@ -38,7 +37,7 @@ public class AppManager implements InterfaceApp {
         System.out.println("Ejecutando login con timestamp " + getNowTimestamp());
 
         AppResponse<String> appResponse = this.authManager.login(username, password);
-        return new SOAPSResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para login", appResponse.getData(), getNowTimestamp());
+        return new SOAPSResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
 
     @Override
@@ -47,7 +46,7 @@ public class AppManager implements InterfaceApp {
         System.out.println("Ejecutando register con timestamp " + getNowTimestamp());
 
         AppResponse<String> appResponse = this.authManager.register(username, password, nombre, apellido, email);
-        return new SOAPSResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para register", appResponse.getData(), getNowTimestamp());
+        return new SOAPSResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
 
     @Override
@@ -56,16 +55,17 @@ public class AppManager implements InterfaceApp {
         System.out.println("Ejecutando validate con timestamp " + getNowTimestamp());
 
         AppResponse<Boolean> appResponse = this.authManager.validateJWT(jwt);
-        return new SOAPBResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para validate", appResponse.getData(), getNowTimestamp());
+        return new SOAPBResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
 
     @Override
     @WebMethod
     public SOAPASResponse getOfficeConversion(String[] files) {
+
         System.out.println("Ejecutando office conversion con timestamp " + getNowTimestamp());
 
         AppResponse<String[]> appResponse = this.conversionManager.queueOfficeConversion(files);
-        return new SOAPASResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para conversión Office", appResponse.getData(), getNowTimestamp());
+        return new SOAPASResponse(appResponse.isSuccess(), appResponse.getMessage(), files, getNowTimestamp());
     }
 
     @Override
@@ -74,7 +74,7 @@ public class AppManager implements InterfaceApp {
         System.out.println("Ejecutando URL conversion con timestamp " + getNowTimestamp());
 
         AppResponse<String[]> appResponse = this.conversionManager.queueURLConversion(urls);
-        return new SOAPASResponse(appResponse.isSuccess(), "Este es un mensaje de éxito para conversión URL", appResponse.getData(), getNowTimestamp());
+        return new SOAPASResponse(appResponse.isSuccess(), appResponse.getMessage(), urls, getNowTimestamp());
     }
 
     @Override
@@ -92,11 +92,11 @@ public class AppManager implements InterfaceApp {
         System.out.println("Ejecutando getStatistics con timestamp " + getNowTimestamp());
 
         Statistics appResponse = this.metricsManager.getStatistics(userId, filter.getStartDate(), filter.getEndDate(), filter.getFileTypeId());
-            return new SOAPStatsResponse(true, "Este es un mensaje de éxito para obtención de las estadísticas", appResponse, getNowTimestamp());
+        return new SOAPStatsResponse(true, "Este es un mensaje de éxito para obtención de las estadísticas", appResponse, getNowTimestamp());
     }
 
     private String getNowTimestamp(){
-        LocalDateTime now = LocalDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
         return now.format(formatter);
     }

@@ -5,7 +5,7 @@ import co.edu.upb.app.application.AuthManager;
 import co.edu.upb.app.application.ConversionManager;
 import co.edu.upb.app.application.MetricsManager;
 import co.edu.upb.app.config.Environment;
-import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceAuth;
+import co.edu.upb.authServer.Interfaces.InterfaceAuth;
 import co.edu.upb.app.infrastructure.AppServer;
 import co.edu.upb.app.infrastructure.NodeRegistry;
 import co.edu.upb.app.infrastructure.StorageClient;
@@ -23,7 +23,11 @@ public class AppFactory {
     public AppFactory(){
         StorageClient storageServer = new StorageClient();
         this.metricsManager = new MetricsManager(storageServer);
-        this.conversionManager = new ConversionManager(metricsManager);
+        try {
+            this.conversionManager = new ConversionManager(metricsManager);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     //For getting the App Server instance (using SOAP)

@@ -1,6 +1,5 @@
 package co.edu.upb.app.application;
 
-import co.edu.upb.app.config.Environment;
 import co.edu.upb.app.domain.interfaces.application.IMetricsManager;
 import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceStorage;
 import co.edu.upb.app.domain.models.Metadata;
@@ -16,16 +15,16 @@ public class MetricsManager implements IMetricsManager {
 
     @Override
     public Boolean storeMetadata(Metadata data) {
-        return storage.storeMetadata(data).body();
+        return Boolean.parseBoolean(storage.storeMetadata(data).body());
     }
 
     @Override
     public Double getTotalConversion(int userId) {
-        return storage.getTotalConversion(userId).body();
+        return Double.parseDouble(storage.getTotalConversion(userId).body());
     }
 
     @Override
     public Statistics getStatistics(int userId, String startDate, String endDate, Integer fileTypeId) {
-        return storage.getStatistics(userId, startDate, endDate, fileTypeId).body();
+        return new Statistics();
     }
 }
