@@ -2,6 +2,7 @@ package co.edu.upb.app.domain.models.soapResponse;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "SOAPDResponse")
@@ -11,5 +12,11 @@ public class SOAPDResponse extends SOAPResponse<Double> { //This is a class for 
 
     public SOAPDResponse(boolean success, String message, Double content, String timestamp){
         super(success, message, content, timestamp);
+    }
+
+    @XmlElement(name = "content")
+    @Override
+    public Double getContent() {
+        return super.getContent();
     }
 }

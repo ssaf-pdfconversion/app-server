@@ -18,23 +18,8 @@ public class SOAPASResponse extends SOAPResponse<String[]> {
         super(success, message, content, timestamp);
     }
 
-    @XmlElement(name = "success")
-    public boolean getSuccess() {
-        return super.getSuccess();
-    }
-
-    @XmlElement(name = "message")
-    public String getMessage() {
-        return super.getMessage();
-    }
-
-    @XmlElement(name = "timestamp")
-    public String getTimestamp() {
-        return super.getTimestamp();
-    }
-
     // Here we override getContent() to wrap the array
-    @XmlElementWrapper(name = "content")  // This creates a parent <content> element
+    @XmlElementWrapper(name = "files")  // This creates a parent <files> element
     @XmlElement(name = "file")             // Each element in the array will appear as <file>
     @Override
     public String[] getContent() {

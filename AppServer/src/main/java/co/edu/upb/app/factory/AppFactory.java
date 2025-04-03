@@ -36,7 +36,9 @@ public class AppFactory {
         //Look for the implementation of the RMI registry of the Auth Server.
         InterfaceAuth auth;
         try {
-            auth = (InterfaceAuth) Naming.lookup("rmi://" + Environment.getInstance().getDotenv().get("AUTH_URL"));
+            String name = "rmi://" + Environment.getInstance().getDotenv().get("AUTH_URL");
+            System.out.println(name);
+            auth = (InterfaceAuth) Naming.lookup(name);
         } catch (NotBoundException | MalformedURLException | RemoteException e) {
             throw new RuntimeException(e);
         }
