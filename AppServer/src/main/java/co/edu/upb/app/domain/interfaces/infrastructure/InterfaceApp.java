@@ -47,13 +47,20 @@ public interface InterfaceApp {
     public SOAPASResponse getOfficeConversion(
             @WebParam(name = "files", partName = "files")
             @XmlElement(name = "files", required = true, nillable = false)
-            String[] files);
+            String[] files,
+            @WebParam(name = "userId", partName = "userId")
+            @XmlElement(name = "userId", required = true, nillable = false)
+            Integer userId
+            );
 
     @WebMethod
     public SOAPASResponse getURLConversion(
             @WebParam(name = "urls", partName = "urls")
             @XmlElement(name = "urls", required = true, nillable = false)
-            String[] urls);
+            String[] urls,
+            @WebParam(name = "userId", partName = "userId")
+            @XmlElement(name = "userId", required = true, nillable = false)
+            Integer userId);
 
     @WebMethod
     public SOAPDResponse getTotalConversion(

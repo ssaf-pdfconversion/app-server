@@ -9,7 +9,6 @@ import co.edu.upb.app.domain.models.Statistics;
 import co.edu.upb.app.domain.models.StatsFilter;
 import co.edu.upb.app.domain.models.soapResponse.*;
 import jakarta.jws.WebMethod;
-import jakarta.jws.WebResult;
 import jakarta.jws.WebService;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -64,7 +63,7 @@ public class AppManager implements InterfaceApp {
 
     @Override
     @WebMethod
-    public SOAPASResponse getOfficeConversion(String[] files) {
+    public SOAPASResponse getOfficeConversion(String[] files, Integer userId) {
 
         AppResponse<String[]> appResponse = this.conversionManager.queueOfficeConversion(files);
 
@@ -75,7 +74,7 @@ public class AppManager implements InterfaceApp {
 
     @Override
     @WebMethod
-    public SOAPASResponse getURLConversion(String[] urls) {
+    public SOAPASResponse getURLConversion(String[] urls, Integer userId) {
         AppResponse<String[]> appResponse = this.conversionManager.queueURLConversion(urls);
 
         System.out.println("Ejecutando url conversion con timestamp " + getNowTimestamp() + " con message " + appResponse.getMessage());

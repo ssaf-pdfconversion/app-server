@@ -9,7 +9,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface InterfaceNode extends Remote {
-    public AppResponse<File> dispatchOffice(Conversion file) throws RemoteException;
-    public AppResponse<File> dispatchURL(Conversion url) throws RemoteException;
-    public AppResponse<NodeReport> getReport() throws RemoteException;
+    public AppResponse<File> dispatchOffice(String file) throws RemoteException;
+    public AppResponse<File> dispatchURL(String url) throws RemoteException;
+    public NodeReport getReport() throws RemoteException;
 }
