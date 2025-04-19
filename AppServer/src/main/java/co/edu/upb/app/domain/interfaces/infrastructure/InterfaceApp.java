@@ -1,5 +1,6 @@
 package co.edu.upb.app.domain.interfaces.infrastructure;
 
+import co.edu.upb.app.domain.models.OfficeFile;
 import co.edu.upb.app.domain.models.StatsFilter;
 import co.edu.upb.app.domain.models.soapResponse.*;
 import jakarta.jws.WebMethod;
@@ -44,17 +45,17 @@ public interface InterfaceApp {
             String jwt);
 
     @WebMethod
-    public SOAPASResponse getOfficeConversion(
+    public SOAPConvResponse getOfficeConversion(
             @WebParam(name = "files", partName = "files")
             @XmlElement(name = "files", required = true, nillable = false)
-            String[] files,
+            OfficeFile[] files,
             @WebParam(name = "userId", partName = "userId")
             @XmlElement(name = "userId", required = true, nillable = false)
             Integer userId
             );
 
     @WebMethod
-    public SOAPASResponse getURLConversion(
+    public SOAPConvResponse getURLConversion(
             @WebParam(name = "urls", partName = "urls")
             @XmlElement(name = "urls", required = true, nillable = false)
             String[] urls,

@@ -2,7 +2,7 @@ package co.edu.upb.app.application;
 
 import co.edu.upb.app.domain.interfaces.application.IMetricsManager;
 import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceStorage;
-import co.edu.upb.app.domain.models.Metadata;
+import co.edu.upb.app.domain.models.storage.Transaction;
 import co.edu.upb.app.domain.models.Statistics;
 
 public class MetricsManager implements IMetricsManager {
@@ -14,7 +14,7 @@ public class MetricsManager implements IMetricsManager {
     }
 
     @Override
-    public Boolean storeMetadata(Metadata data) {
+    public Boolean storeMetadata(Transaction data) {
         return Boolean.parseBoolean(storage.storeMetadata(data).body());
     }
 

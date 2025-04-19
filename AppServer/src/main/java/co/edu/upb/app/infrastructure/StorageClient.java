@@ -2,7 +2,10 @@ package co.edu.upb.app.infrastructure;
 
 import co.edu.upb.app.config.Environment;
 import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceStorage;
-import co.edu.upb.app.domain.models.Metadata;
+import co.edu.upb.app.domain.models.storage.Metadata;
+import co.edu.upb.app.domain.models.storage.Transaction;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.net.URI;
@@ -22,19 +25,13 @@ public class StorageClient implements InterfaceStorage {
     }
 
     @Override
-    public HttpResponse<String> storeMetadata(Metadata data) {
+    public HttpResponse<String> storeMetadata(Transaction data) {
 
-        String jsonRequestBody = String.format("""
-            {
-                "usuarioId": %d,
-                "tipoArchivoId": %d,
-                "size": %.2f%%,
-                "fechaHora": %s
-            }
-            """, data.userId(), data.fileTypeId(), data.size(), data.timestamp());
+        Gson gson = new Gson();
+        String json = gson.toJson(new Metadata(data));
 
         HttpRequest postRequest = HttpRequest.newBuilder()
-                .POST(HttpRequest.BodyPublishers.ofString(jsonRequestBody))
+                .POST(HttpRequest.BodyPublishers.ofString(json))
                 .uri(URI.create(url + "/storeMetadata"))
                 .header("Accept", "application/json")
                 .build();

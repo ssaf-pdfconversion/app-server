@@ -5,9 +5,11 @@ import co.edu.upb.app.domain.interfaces.application.IConversionManager;
 import co.edu.upb.app.domain.interfaces.application.IMetricsManager;
 import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceApp;
 import co.edu.upb.app.domain.models.AppResponse;
+import co.edu.upb.app.domain.models.OfficeFile;
 import co.edu.upb.app.domain.models.Statistics;
 import co.edu.upb.app.domain.models.StatsFilter;
 import co.edu.upb.app.domain.models.soapResponse.*;
+import co.edu.upb.node.domain.models.ConvertedFile;
 import jakarta.jws.WebMethod;
 import jakarta.jws.WebService;
 import java.time.ZonedDateTime;
@@ -37,8 +39,7 @@ public class AppManager implements InterfaceApp {
 
         AppResponse<String> appResponse = this.authManager.login(username, password);
 
-        System.out.println("Ejecutando login con timestamp " + getNowTimestamp() + " con message " + appResponse.getMessage());
-
+        System.out.println("Ejecutando login con timestampQuery " + getNowTimestamp() + " con message " + appResponse.getMessage());
         return new SOAPSResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
 
@@ -47,7 +48,7 @@ public class AppManager implements InterfaceApp {
     public SOAPSResponse register(String username, String password, String nombre, String apellido, String email) {
         AppResponse<String> appResponse = this.authManager.register(username, password, nombre, apellido, email);
 
-        System.out.println("Ejecutando register con timestamp " + getNowTimestamp() + " con message " + appResponse.getMessage());
+        System.out.println("Ejecutando register con timestampQuery " + getNowTimestamp() + " con message " + appResponse.getMessage());
         return new SOAPSResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
 
@@ -56,30 +57,27 @@ public class AppManager implements InterfaceApp {
     public SOAPBResponse validate(String jwt) {
         AppResponse<Boolean> appResponse = this.authManager.validateJWT(jwt);
 
-        System.out.println("Ejecutando validate con timestamp " + getNowTimestamp() + " con message " + appResponse.getMessage());
-
+        System.out.println("Ejecutando validate con timestampQuery " + getNowTimestamp() + " con message " + appResponse.getMessage());
         return new SOAPBResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
 
     @Override
     @WebMethod
-    public SOAPASResponse getOfficeConversion(String[] files, Integer userId) {
+    public SOAPConvResponse getOfficeConversion(OfficeFile[] files, Integer userId) {
 
-        AppResponse<String[]> appResponse = this.conversionManager.queueOfficeConversion(files);
+        AppResponse<ConvertedFile[]> appResponse = this.conversionManager.queueOfficeConversion(files, userId);
 
-        System.out.println("Ejecutando office conversion con timestamp " + getNowTimestamp() + " con message " + appResponse.getMessage());
-
-        return new SOAPASResponse(appResponse.isSuccess(), appResponse.getMessage(), files, getNowTimestamp());
+        System.out.println("Ejecutando office conversion con timestampQuery " + getNowTimestamp() + " con message " + appResponse.getMessage());
+        return new SOAPConvResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
 
     @Override
     @WebMethod
-    public SOAPASResponse getURLConversion(String[] urls, Integer userId) {
-        AppResponse<String[]> appResponse = this.conversionManager.queueURLConversion(urls);
+    public SOAPConvResponse getURLConversion(String[] urls, Integer userId) {
+        AppResponse<ConvertedFile[]> appResponse = this.conversionManager.queueURLConversion(urls, userId);
 
-        System.out.println("Ejecutando url conversion con timestamp " + getNowTimestamp() + " con message " + appResponse.getMessage());
-
-        return new SOAPASResponse(appResponse.isSuccess(), appResponse.getMessage(), urls, getNowTimestamp());
+        System.out.println("Ejecutando url conversion con timestampQuery " + getNowTimestamp() + " con message " + appResponse.getMessage());
+        return new SOAPConvResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
 
     @Override
@@ -87,7 +85,7 @@ public class AppManager implements InterfaceApp {
     public SOAPDResponse getTotalConversion(Integer userId) {
         Double appResponse = this.metricsManager.getTotalConversion(userId);
 
-        System.out.println("Ejecutando total conversion con timestamp " + getNowTimestamp() + " con message " + appResponse);
+        System.out.println("Ejecutando total conversion con timestampQuery " + getNowTimestamp() + " con message " + appResponse);
 
         return new SOAPDResponse(true, "Este es un mensaje de éxito para obtención del total de conversión", appResponse, getNowTimestamp());
     }
@@ -97,7 +95,7 @@ public class AppManager implements InterfaceApp {
     public SOAPStatsResponse getStatistics(Integer userId, StatsFilter filter) {
         Statistics appResponse = this.metricsManager.getStatistics(userId, filter.getStartDate(), filter.getEndDate(), filter.getFileTypeId());
 
-        System.out.println("Ejecutando statistics con timestamp " + getNowTimestamp() + " con message " + appResponse);
+        System.out.println("Ejecutando statistics con timestampQuery " + getNowTimestamp() + " con message " + appResponse);
 
         return new SOAPStatsResponse(true, "Este es un mensaje de éxito para obtención de las estadísticas", appResponse, getNowTimestamp());
     }

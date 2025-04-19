@@ -16,7 +16,7 @@ public class SOAPResponse<DataType> { //Generic class to wrap content with usefu
     @XmlElement(name = "content")
     private DataType content;
 
-    @XmlElement(name = "timestamp", required = true)
+    @XmlElement(name = "timestampQuery", required = true)
     private String timestamp;
 
     public SOAPResponse(){
