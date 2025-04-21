@@ -15,6 +15,7 @@ import co.edu.upb.node.domain.models.Iteration;
 import co.edu.upb.node.domain.models.NodeReport;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -25,13 +26,11 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
     private final IMetricsManager metricsManager;
     private final ArrayList<InterfaceNode> nodes;
     private final Map<InterfaceNode, Double> fullNodes;
-    private final DateTimeFormatter formatter;
 
     public ConversionManager(IMetricsManager metricsManager) throws RemoteException{
         this.metricsManager = metricsManager;
         this.nodes = new ArrayList<>();
         this.fullNodes = new HashMap<>();
-        this.formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
     }
 
     @Override
@@ -121,7 +120,7 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
         Map<AppResponse<File>, List<AppResponse<Iteration>>> transactions = new HashMap<>();
 
         // capture the overall transaction timestampQuery once
-        String transactionTimestamp = ZonedDateTime.now().format(formatter);
+        Instant time = Instant.now();
 
         try {
             for (T file : files) {
@@ -198,9 +197,9 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
                     } catch (RemoteException re) {
                         // on RPC failure, record a “failed” iteration
                         Iteration fallback = new Iteration(
-                                ZonedDateTime.now().format(formatter),
+                                Instant.now().toString(),
                                 bestNode.toString(),
-                                ZonedDateTime.now().format(formatter)
+                                Instant.now().toString()
                         );
                         iterationList.add(new AppResponse<>(
                                 false,
@@ -228,7 +227,7 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
                 transactions.put(fileResp, iterationList);
             }
 
-            this.storeMetadata(transactions, userId, transactionTimestamp);
+            this.storeMetadata(transactions, userId, time.toString());
 
             return new AppResponse<>(true, "All files were converted successfully!", fileResponses);
 

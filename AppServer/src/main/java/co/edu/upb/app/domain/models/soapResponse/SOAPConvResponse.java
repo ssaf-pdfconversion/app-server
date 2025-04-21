@@ -1,10 +1,7 @@
 package co.edu.upb.app.domain.models.soapResponse;
 
 import co.edu.upb.node.domain.models.ConvertedFile;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.*;
 
 @XmlRootElement(name = "SOAPConvResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -15,7 +12,8 @@ public class SOAPConvResponse extends SOAPResponse<ConvertedFile[]> { //This is 
         super(success, message, content, timestamp);
     }
 
-    @XmlElement(name = "content")
+    @XmlElementWrapper(name = "files")  // This creates a parent <files> element
+    @XmlElement(name = "file")
     @Override
     public ConvertedFile[] getContent() {
         return super.getContent();

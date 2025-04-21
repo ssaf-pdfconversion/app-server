@@ -1,11 +1,12 @@
 package co.edu.upb.app.domain.models.soapResponse;
 
 import co.edu.upb.app.domain.models.Statistics;
+import co.edu.upb.node.domain.models.ConvertedFile;
 import jakarta.xml.bind.annotation.*;
 
 @XmlRootElement(name = "SOAPResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlSeeAlso({ Statistics.class })
+@XmlSeeAlso({ Statistics.class, ConvertedFile.class})
 public class SOAPResponse<DataType> { //Generic class to wrap content with useful information.
     @XmlElement(name = "success", required = true)
     private boolean success;
@@ -13,10 +14,10 @@ public class SOAPResponse<DataType> { //Generic class to wrap content with usefu
     @XmlElement(name = "message", required = true)
     private String message;
 
-    @XmlElement(name = "content")
+    @XmlElement(name = "content", required = true)
     private DataType content;
 
-    @XmlElement(name = "timestampQuery", required = true)
+    @XmlElement(name = "timestamp", required = true)
     private String timestamp;
 
     public SOAPResponse(){
