@@ -27,7 +27,7 @@ public class NodeRegistry {
 
             LocateRegistry.createRegistry(Integer.parseInt(port));
             try {
-                Naming.rebind("//127.0.0.1:"+port+"/registry", service);
+                Naming.rebind("//"+serverIp+":"+port+"/registry", service);
             } catch (RemoteException | MalformedURLException e) {
                 e.printStackTrace();
             }
