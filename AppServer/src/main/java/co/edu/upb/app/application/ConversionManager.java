@@ -48,7 +48,7 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
 
             ConvertedFile[] convertedFilesArray = getConvertedFiles(response);
 
-            return new AppResponse<>(true, "Office files converted successfully", convertedFilesArray);
+            return new AppResponse<>(true, response.getMessage(), convertedFilesArray);
         } catch (Exception e) {
             return new AppResponse<>(false, "Office files couldn't be converted", new ConvertedFile[0]);
         }
@@ -63,7 +63,7 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
 
             ConvertedFile[] convertedFilesArray = getConvertedFiles(response);
 
-            return new AppResponse<>(true, "URLs converted successfully", convertedFilesArray);
+            return new AppResponse<>(true, response.getMessage(), convertedFilesArray);
         } catch (Exception e) {
             return new AppResponse<>(false, "URLs couldn't be converted", new ConvertedFile[0]);
         }
@@ -121,6 +121,11 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
 
         // capture the overall transaction timestampQuery once
         Instant time = Instant.now();
+
+        if(nodes.isEmpty()){
+            this.storeMetadata(transactions, userId, time.toString());
+            return new AppResponse<>(true, "No resources available for converting", fileResponses);
+        }
 
         try {
             for (T file : files) {
@@ -226,6 +231,8 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
                 fileResponses.add(fileResp);
                 transactions.put(fileResp, iterationList);
             }
+
+            System.out.println("hola");
 
             this.storeMetadata(transactions, userId, time.toString());
 

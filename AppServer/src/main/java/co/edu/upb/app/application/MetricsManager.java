@@ -23,35 +23,48 @@ public class MetricsManager implements IMetricsManager {
 
     @Override
     public AppResponse<Boolean> storeMetadata(Transaction data) {
-        HttpResponse<String> resp = storage.storeMetadata(data);
-        String json = resp.body();
+        try {
+            System.out.println(data);
+            HttpResponse<String> resp = storage.storeMetadata(data);
+            String json = resp.body();
 
-        //parse into the DataBoolean class
-        Gson gson = new Gson();
-        DataBoolean dataBool = gson.fromJson(json, DataBoolean.class);
-        return new AppResponse<>(dataBool.getStatus(), dataBool.getMessage(), dataBool.getData());
+            //parse into the DataBoolean class
+            Gson gson = new Gson();
+            DataBoolean dataBool = gson.fromJson(json, DataBoolean.class);
+            return new AppResponse<>(dataBool.getStatus(), dataBool.getMessage(), dataBool.getData());
+        } catch (Exception e) {
+            return new AppResponse<>(false, "Data couldn't be stored", false);
+        }
     }
 
     @Override
     public AppResponse<Double> getTotalConversion(int userId) {
-        HttpResponse<String> resp = storage.getTotalConversion(userId);
-        String json = resp.body();
+        try {
+            HttpResponse<String> resp = storage.getTotalConversion(userId);
+            String json = resp.body();
 
-        //parse into the DataDouble class
-        Gson gson = new Gson();
-        DataDouble data = gson.fromJson(json, DataDouble.class);
-        return new AppResponse<>(data.getStatus(), data.getMessage(), data.getData());
+            //parse into the DataDouble class
+            Gson gson = new Gson();
+            DataDouble data = gson.fromJson(json, DataDouble.class);
+            return new AppResponse<>(data.getStatus(), data.getMessage(), data.getData());
+        } catch (Exception e) {
+            return new AppResponse<>(false, "Total conversion couldn't be fetched", 0.0);
+        }
     }
 
     @Override
     public AppResponse<Statistics[]> getStatistics(int userId, String startDate, String endDate, Integer fileTypeId) {
 
-        HttpResponse<String> resp = storage.getStatistics(userId, startDate, endDate, fileTypeId);
-        String json = resp.body();
+        try {
+            HttpResponse<String> resp = storage.getStatistics(userId, startDate, endDate, fileTypeId);
+            String json = resp.body();
 
-        //parse into the DataStatistics class
-        Gson gson = new Gson();
-        DataStatistics data = gson.fromJson(json, DataStatistics.class);
-        return new AppResponse<>(data.getStatus(), data.getMessage(), data.getData());
+            //parse into the DataStatistics class
+            Gson gson = new Gson();
+            DataStatistics data = gson.fromJson(json, DataStatistics.class);
+            return new AppResponse<>(data.getStatus(), data.getMessage(), data.getData());
+        } catch (Exception e) {
+            return new AppResponse<>(false, "Data couldn't be stored", new Statistics[0]);
+        }
     }
 }
