@@ -45,6 +45,7 @@ public class MetricsManager implements IMetricsManager {
 
     @Override
     public AppResponse<Statistics[]> getStatistics(int userId, String startDate, String endDate, Integer fileTypeId) {
+
         HttpResponse<String> resp = storage.getStatistics(userId, startDate, endDate, fileTypeId);
         String json = resp.body();
 

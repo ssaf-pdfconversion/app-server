@@ -7,9 +7,11 @@ import co.edu.upb.app.domain.models.storage.Transaction;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 public class StorageClient implements InterfaceStorage {
@@ -44,31 +46,51 @@ public class StorageClient implements InterfaceStorage {
 
     @Override
     public HttpResponse<String> getTotalConversion(Integer userId) {
+        //Encode query param
+        String query = String.format("%s",
+                URLEncoder.encode(userId.toString(), StandardCharsets.UTF_8)
+        );
+
+        String fullUri = url + "/getTotalStorage/" + query;
+
         HttpRequest getRequest = HttpRequest.newBuilder()
                 .GET()
-                .uri(URI.create(url + "/getTotalStorage"))
+                .uri(URI.create(fullUri))
                 .header("Accept", "application/json")
                 .build();
-
         try {
             return this.client.send(getRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to fetch total conversion",e);
         }
     }
 
     @Override
-    public HttpResponse<String> getStatistics(Integer userId, String startDate, String endDate, Integer fileTypeId) {
+    public HttpResponse<String> getStatistics(Integer userId,
+                                              String startDate,
+                                              String endDate,
+                                              Integer fileTypeId) {
+        //Encode query params
+        String query = String.format("usuarioId=%s&fechaInicio=%s&fechaFin=%s&tipoArchivoId=%s",
+                URLEncoder.encode(userId.toString(), StandardCharsets.UTF_8),
+                URLEncoder.encode(startDate,   StandardCharsets.UTF_8),
+                URLEncoder.encode(endDate,     StandardCharsets.UTF_8),
+                URLEncoder.encode(fileTypeId.toString(), StandardCharsets.UTF_8)
+        );
+
+        String fullUri = url + "/getStatistics?" + query;
+
         HttpRequest getRequest = HttpRequest.newBuilder()
                 .GET()
-                .uri(URI.create(url + "/getStatistics"))
+                .uri(URI.create(fullUri))
                 .header("Accept", "application/json")
                 .build();
 
         try {
             return this.client.send(getRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to fetch statistics", e);
         }
     }
 }
