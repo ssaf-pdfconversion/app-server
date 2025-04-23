@@ -12,6 +12,7 @@ import co.edu.upb.app.domain.models.Statistics;
 import com.google.gson.Gson;
 
 import java.net.http.HttpResponse;
+import java.time.Instant;
 
 public class MetricsManager implements IMetricsManager {
 
@@ -64,10 +65,20 @@ public class MetricsManager implements IMetricsManager {
             HttpResponse<String> resp = storage.getStatistics(userId, startDate, endDate, fileTypeId);
             String json = resp.body();
 
+            System.out.println(json);
+
             //parse into the DataStatistics class
             Gson gson = new Gson();
             DataStatistics data = gson.fromJson(json, DataStatistics.class);
-            return new AppResponse<>(data.getStatus(), data.getMessage(), data.getData());
+            Statistics[] statsData = data.getData();
+
+            if (data.getData().length == 0){
+
+                Instant timestamp = Instant.now();
+                statsData = new Statistics[0];
+            }
+
+            return new AppResponse<>(data.getStatus(), data.getMessage(), statsData);
         } catch (Exception e) {
             return new AppResponse<>(false, "Data couldn't be stored", new Statistics[0]);
         }
