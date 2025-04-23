@@ -45,6 +45,7 @@ public class MetricsManager implements IMetricsManager {
 
             //parse into the DataDouble class
             Gson gson = new Gson();
+            System.out.println(json);
             DataDouble data = gson.fromJson(json, DataDouble.class);
 
             System.out.println(data.getData());
