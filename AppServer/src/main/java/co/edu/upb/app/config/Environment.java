@@ -9,12 +9,12 @@ public class Environment {
     private Dotenv dotenv;
 
     private Environment() {
-//        String configDir = System.getProperty("config.dir", "/home/appserver/environment");
-//        dotenv = Dotenv.configure()
-//                .directory(configDir)
-//                .filename(".env")
-//                .load();
-        dotenv = Dotenv.load();
+        String configDir = System.getProperty("config.dir", "/home/appserver/environment");
+        dotenv = Dotenv.configure()
+                .directory(configDir)
+                .filename(".env")
+                .load();
+//        dotenv = Dotenv.load();
     }
 
     public static Environment getInstance() {
