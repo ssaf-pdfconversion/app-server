@@ -76,6 +76,8 @@ public class MetricsManager implements IMetricsManager {
 
                 Instant timestamp = Instant.now();
                 statsData = new Statistics[0];
+
+                System.out.println("NO DATA RETRIEVED " + timestamp.toString());
             }
 
             return new AppResponse<>(data.getStatus(), data.getMessage(), statsData);
