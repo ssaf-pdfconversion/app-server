@@ -75,7 +75,6 @@ public class AppManager implements InterfaceApp {
     public SOAPConvResponse getURLConversion(String[] urls, Integer userId) {
         AppResponse<ConvertedFile[]> appResponse = this.conversionManager.queueURLConversion(urls, userId);
 
-
         System.out.println("Ejecutando url conversion con timestamp " + getNowTimestamp() + " con message " + appResponse.getMessage());
         return new SOAPConvResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
