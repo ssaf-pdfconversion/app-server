@@ -108,11 +108,13 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
             conversions.add(new Conversion(userId,fileAppResponse.getData().size(), fileAppResponse.getData().fileTypeId(), fileAppResponse.getData().timestamp(), fileAppResponse.isSuccess(), transactionIterationList.toArray(new TransactionIteration[0])));
         }
 
+        //Store the metadata on the storage server.
         AppResponse<Boolean> response = this.metricsManager.storeMetadata(new Transaction(
                 timestampQuery, conversions.toArray(new Conversion[0])
         ));
 
-        System.out.println("Storage server with success on "+response.isSuccess() + " with message " + response.getMessage());
+        //Log the transaction
+        System.out.println("Storage server with success on "+response.isSuccess() + " with message " + response.getMessage() + " at " + Instant.now().toString());
     }
 
     private <T> AppResponse<List<AppResponse<File>>> queueAlgorithm(T[] files, int strategy, int userId) {
