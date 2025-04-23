@@ -51,6 +51,7 @@ public class MetricsManager implements IMetricsManager {
 
             return new AppResponse<>(data.getStatus(), data.getMessage(), data.getData());
         } catch (Exception e) {
+            e.printStackTrace();
             return new AppResponse<>(false, "Total conversion couldn't be fetched", 0.0);
         }
     }
