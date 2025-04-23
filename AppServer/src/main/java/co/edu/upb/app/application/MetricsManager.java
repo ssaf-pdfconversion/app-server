@@ -46,6 +46,9 @@ public class MetricsManager implements IMetricsManager {
             //parse into the DataDouble class
             Gson gson = new Gson();
             DataDouble data = gson.fromJson(json, DataDouble.class);
+
+            System.out.println(data.getData());
+
             return new AppResponse<>(data.getStatus(), data.getMessage(), data.getData());
         } catch (Exception e) {
             return new AppResponse<>(false, "Total conversion couldn't be fetched", 0.0);
