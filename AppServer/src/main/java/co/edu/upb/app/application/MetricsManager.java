@@ -25,7 +25,6 @@ public class MetricsManager implements IMetricsManager {
     @Override
     public AppResponse<Boolean> storeMetadata(Transaction data) {
         try {
-            System.out.println(data);
             HttpResponse<String> resp = storage.storeMetadata(data);
             String json = resp.body();
 
