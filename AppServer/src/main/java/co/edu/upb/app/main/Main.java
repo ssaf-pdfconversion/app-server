@@ -10,7 +10,9 @@ public class Main {
         AppFactory appFactory = new AppFactory();
 
         //Running SOAP server
-        AppServer appServer = appFactory.getAppServerInstance();
+        AppServer appServer;
+        appServer = appFactory.getAppServerInstance();
+
         appServer.run();
 
         //Running Node registry server
