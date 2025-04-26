@@ -2,6 +2,7 @@ package co.edu.upb.app.application;
 
 import co.edu.upb.app.domain.interfaces.application.IConversionManager;
 import co.edu.upb.app.domain.interfaces.application.IMetricsManager;
+import co.edu.upb.app.domain.models.FileResult;
 import co.edu.upb.app.domain.models.OfficeFile;
 import co.edu.upb.app.domain.models.storage.Conversion;
 import co.edu.upb.app.domain.models.storage.TransactionIteration;
@@ -16,21 +17,18 @@ import co.edu.upb.node.domain.models.NodeReport;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class ConversionManager extends UnicastRemoteObject implements IConversionManager, InterfacePublisher {
 
     private final IMetricsManager metricsManager;
     private final ArrayList<InterfaceNode> nodes;
-    private final Map<InterfaceNode, Double> fullNodes;
 
     public ConversionManager(IMetricsManager metricsManager) throws RemoteException{
         this.metricsManager = metricsManager;
         this.nodes = new ArrayList<>();
-        this.fullNodes = new HashMap<>();
     }
 
     @Override
@@ -50,6 +48,7 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
 
             return new AppResponse<>(true, response.getMessage(), convertedFilesArray);
         } catch (Exception e) {
+            e.printStackTrace();
             return new AppResponse<>(false, "Office files couldn't be converted", new ConvertedFile[0]);
         }
     }
@@ -65,6 +64,7 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
 
             return new AppResponse<>(true, response.getMessage(), convertedFilesArray);
         } catch (Exception e) {
+            e.printStackTrace();
             return new AppResponse<>(false, "URLs couldn't be converted", new ConvertedFile[0]);
         }
     }
@@ -89,7 +89,6 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
     private void storeMetadata(Map<AppResponse<File>, List<AppResponse<Iteration>>> transactions, Integer userId, String timestampQuery) {
         //We map the data into the required format
         //FIRST: We setup an array of TransactionIteration instances.
-        Transaction generalTransaction = new Transaction(timestampQuery, new Conversion[0]);
         List<Conversion> conversions = new ArrayList<>();
 
         //Map AppResponse<Iteration> instances into TransactionIteration instances
@@ -109,141 +108,166 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
             conversions.add(new Conversion(userId,fileAppResponse.getData().size(), fileAppResponse.getData().fileTypeId(), fileAppResponse.getData().timestamp(), fileAppResponse.isSuccess(), transactionIterationList.toArray(new TransactionIteration[0])));
         }
 
-        this.metricsManager.storeMetadata(new Transaction(
+        //Store the metadata on the storage server.
+        AppResponse<Boolean> response = this.metricsManager.storeMetadata(new Transaction(
                 timestampQuery, conversions.toArray(new Conversion[0])
         ));
+
+        //Log the transaction
+        System.out.println("Storage server with success on "+response.isSuccess() + " with message " + response.getMessage() + " at " + Instant.now().toString());
     }
 
     private <T> AppResponse<List<AppResponse<File>>> queueAlgorithm(T[] files, int strategy, int userId) {
-        List<AppResponse<File>> fileResponses = new ArrayList<>();
-        // now maps each file‐response to its list of iteration‐responses
-        Map<AppResponse<File>, List<AppResponse<Iteration>>> transactions = new HashMap<>();
-
-        // capture the overall transaction timestampQuery once
+        List<AppResponse<File>> fileResponses = new ArrayList<>(); //Files to be returned
+        Map<AppResponse<File>, List<AppResponse<Iteration>>> transactions = new HashMap<>(); //Transaction for storeMetadata
         Instant time = Instant.now();
 
-        if(nodes.isEmpty()){
-            this.storeMetadata(transactions, userId, time.toString());
+        //When empty, then no resources are available
+        if (nodes.isEmpty()) {
+            storeMetadata(transactions, userId, time.toString());
             return new AppResponse<>(true, "No resources available for converting", fileResponses);
         }
 
-        try {
-            for (T file : files) {
-                // collect each iteration as an AppResponse<Iteration>
-                List<AppResponse<Iteration>> iterationList = new ArrayList<>();
-                File finalFileResult = null;
-                boolean conversionSuccess = false;
+        //Fetch all the reports for subscribed nodes.
+        Map<InterfaceNode, Double> baseLoads = new HashMap<>();
+        for (InterfaceNode node : nodes) {
+            try {
+                AppResponse<NodeReport> report = node.getReport();
+                if (!report.isSuccess()) continue;
+                NodeReport rep = report.getData();
+                //Following partial equation: a*cpuUsage + b*activeTasks + c*queueLength
+                double cost = 0.3 * rep.cpuUsage() + 0.1 * rep.activeTasks() + 0.2 * rep.queueLength();
+                baseLoads.put(node, cost);
+            } catch (Exception ignore) {}
+        }
+        if (baseLoads.isEmpty()) {
+            storeMetadata(transactions, userId, time.toString());
+            return new AppResponse<>(false, "All nodes unavailable", fileResponses);
+        }
 
-                for (int attempt = 1; attempt <= 5 && !conversionSuccess; attempt++) {
-                    // Update node metrics to calculate the partial load for every node.
-                    fullNodes.clear();
-                    for (InterfaceNode node : nodes) {
-                        try {
-                            AppResponse<NodeReport> response = node.getReport();
+        //Initialize variables.
+        List<T> toConvert = new ArrayList<>(Arrays.asList(files)); //Array of files converted to list.
+        Map<T, List<AppResponse<Iteration>>> iterationHistory = new LinkedHashMap<>(); //A map of the files and the list of nodes iterations.
+        for (T f : files) iterationHistory.put(f, new ArrayList<>()); //Populate map with files and empty arraylists.
+        Map<T, FileResult> finalResults = new LinkedHashMap<>(); //For each original file, a FileResult.
 
-                            if (!response.isSuccess()) {
-                                throw new Exception(response.getMessage());
-                            }
+        //Iterate for max 5 attempts for conversion and files to convert is not empty.
+        for (int attempt = 1; attempt <= 5 && !toConvert.isEmpty(); attempt++) {
+            //Map files to nodes (for dispatching) based on dynamic load.
+            Map<InterfaceNode, List<T>> assignment = new HashMap<>();
+            Map<InterfaceNode, Double> dynamicLoads = new HashMap<>(baseLoads); //For partial loads + file sizes.
+            for (T file : toConvert) {
+                long size = (file instanceof String)
+                        ? 5000L //URL
+                        : calculateOriginalSize(((OfficeFile) file).getFileBase64()); //Office
+                long kb = size / 1000;
 
-                            NodeReport report = response.getData();
+                //Sort value ASC and get the first entry key.
+                InterfaceNode chosen = sortByValueAscending(dynamicLoads).entrySet().iterator().next().getKey();
 
-                            double partialCalc = 0.1 * report.cpuUsage()
-                                    + 0.2 * report.activeTasks()
-                                    + 0.3 * report.queueLength();
-                            fullNodes.put(node, partialCalc);
-                        } catch (Exception e) {
-                            //Remove the node from the full node, due to any sort of exceptions
-                            fullNodes.remove(node);
-                        }
-                    }
+                //Add the file to get dispatched for that chosen node.
+                assignment.computeIfAbsent(chosen, k -> new ArrayList<>()).add(file);
 
-                    // Adjust each node's calculation by adding the normalized file size.
-                    long size = 0L;
-
-                    if (file instanceof String) {
-                        size = 5000; //For URLs, an average size of 5000 bytes is given.
-                    } else if (file instanceof OfficeFile) {
-                        size = calculateOriginalSize(((OfficeFile) file).getFileBase64()); //For office files, the size is calculated based on its data encoded on a base64 string.
-                    }
-
-                    long normalizedSize = size / 1000;  // Normalization factor as needed.
-                    Map<InterfaceNode, Double> fullCalculations = new HashMap<>();
-                    for (Map.Entry<InterfaceNode, Double> entry : fullNodes.entrySet()) {
-                        double fullCalc = entry.getValue() + (0.4 * normalizedSize);
-                        fullCalculations.put(entry.getKey(), fullCalc);
-                    }
-                    Map<InterfaceNode, Double> sortedNodes = sortByValueAscending(fullCalculations);
-                    InterfaceNode bestNode = sortedNodes.entrySet().iterator().next().getKey(); // Best node to dispatch the conversion.
-
-                    // Attempt dispatching the conversion.
-
-                    try {
-                        AppResponse<Map<File,Iteration>> dispatchResp;
-                        if (strategy == 1 && file instanceof OfficeFile officeFile) {
-                            dispatchResp = bestNode.dispatchOffice(officeFile.getFileBase64(), officeFile.getFileName());
-                        } else {
-                            dispatchResp = bestNode.dispatchURL((String) file);
-                        }
-
-                        if (dispatchResp != null && dispatchResp.getData() != null && !dispatchResp.getData().isEmpty()) {
-                            Map.Entry<File,Iteration> entry = dispatchResp.getData().entrySet().iterator().next();
-                            // wrap the raw Iteration into an AppResponse<Iteration>
-                            AppResponse<Iteration> iterResp = new AppResponse<>(
-                                    dispatchResp.isSuccess(),
-                                    dispatchResp.getMessage(),
-                                    entry.getValue()
-                            );
-                            iterationList.add(iterResp);
-
-                            finalFileResult = entry.getKey();
-                            conversionSuccess = dispatchResp.isSuccess();
-                        }
-
-                    } catch (RemoteException re) {
-                        // on RPC failure, record a “failed” iteration
-                        Iteration fallback = new Iteration(
-                                Instant.now().toString(),
-                                bestNode.toString(),
-                                Instant.now().toString()
-                        );
-                        iterationList.add(new AppResponse<>(
-                                false,
-                                re.getMessage(),
-                                fallback
-                        ));
-                        finalFileResult = File.empty();
-                    }
-                }
-
-                if (finalFileResult == null) {
-                    finalFileResult = File.empty();
-                }
-
-                // build the per-file AppResponse<File>
-                AppResponse<File> fileResp = new AppResponse<>(
-                        conversionSuccess,
-                        conversionSuccess
-                                ? "File converted successfully."
-                                : "File conversion failed after 5 attempts.",
-                        finalFileResult
-                );
-
-                fileResponses.add(fileResp);
-                transactions.put(fileResp, iterationList);
+                //Increase load for chosen node
+                dynamicLoads.put(chosen, dynamicLoads.get(chosen) + 0.4 * kb);
             }
 
-            System.out.println("hola");
+            //Dispatch files in parallel
+            ExecutorService pool = Executors.newFixedThreadPool(nodes.size()); //Pool of threads based on nodes quantity.
+            ConcurrentMap<T, FileResult> attemptResults = new ConcurrentHashMap<>(); //Concurrent map for thread-safe operations.
 
-            this.storeMetadata(transactions, userId, time.toString());
+            //For every entry of the map, do the rightful dispatches.
+            for (Map.Entry<InterfaceNode, List<T>> entry : assignment.entrySet()) {
+                InterfaceNode node = entry.getKey();
+                for (T file : entry.getValue()) {
+                    int finalAttempt = attempt;
 
-            return new AppResponse<>(true, "All files were converted successfully!", fileResponses);
+                    //Submit a runnable
+                    pool.submit(() -> {
+                        List<AppResponse<Iteration>> iters = new ArrayList<>(); //For iterations done within the conversion.
+                        boolean success = false; //Success is false for starters.
+                        File resultFile = File.empty(); //The file is empty for starters.
+                        try {
+                            //Dispatch depending on the strategy.
+                            AppResponse<Map<File,Iteration>> dr = (strategy == 1)
+                                    ? node.dispatchOffice(((OfficeFile) file).getFileBase64(), ((OfficeFile) file).getFileName())
+                                    : node.dispatchURL((String) file);
 
-        } catch (Exception e) {
-            return new AppResponse<>(false, "Files couldn't be converted", new ArrayList<>());
+                            //Make sure the data/response is not null/empty.
+                            if (dr != null && dr.getData() != null && !dr.getData().isEmpty()) {
+                                var ent = dr.getData().entrySet().iterator().next();
+                                //Add to the iterations, the wrapper with its corresponding iteration.
+                                iters.add(new AppResponse<>(dr.isSuccess(), dr.getMessage(), ent.getValue()));
+
+                                //Finally, assign file and success bool.
+                                resultFile = ent.getKey();
+                                success = dr.isSuccess();
+                            }
+                        } catch (RemoteException re) {
+                            //Set a default AppResponse, stating that an error occurred with its message for logging purposes.
+                            iters.add(new AppResponse<>(false, re.getMessage(),
+                                    new Iteration(Instant.now().toString(), node.toString(), Instant.now().toString())));
+                        }
+
+                        //Set the success of the file conversion.
+                        AppResponse<File> fileResp = new AppResponse<>(
+                                success,
+                                success ? "File converted successfully." : "Attempt " + finalAttempt + " failed.",
+                                resultFile
+                        );
+
+                        //Add response to the concurrent map.
+                        attemptResults.put(file, new FileResult(fileResp, iters));
+                    });
+                }
+            }
+
+            //Shutdown and terminate the thread pool
+            pool.shutdown();
+            try { pool.awaitTermination(1, TimeUnit.HOURS); }
+            catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+
+            //Gather the conversion results for next retry if applicable.
+            List<T> nextRetry = new ArrayList<>();
+            for (T file : toConvert) {
+                FileResult fr = attemptResults.get(file);
+
+                //Add the iterations done for the original file/url to convert.
+                iterationHistory.get(file).addAll(fr.iterations);
+
+                if (fr.fileResponse.isSuccess()) {
+                    //Put it on the finalResults
+                    finalResults.put(file, new FileResult(fr.fileResponse, iterationHistory.get(file)));
+                } else {
+                    //Add it for retry.
+                    nextRetry.add(file);
+                }
+            }
+
+            //Now files to convert, are the ones that failed.
+            toConvert = nextRetry;
         }
+
+        //Wrap failures after 5 unsuccessful attempts.
+        for (T file : toConvert) {
+            List<AppResponse<Iteration>> iters = iterationHistory.get(file);
+            AppResponse<File> resp = new AppResponse<>(false,
+                    "File conversion failed after 5 attempts.", File.empty());
+            finalResults.put(file, new FileResult(resp, iters));
+        }
+
+        //Pipe data for transaction map
+        for (T file : files) {
+            FileResult fr = finalResults.get(file);
+            fileResponses.add(fr.fileResponse);
+            transactions.put(fr.fileResponse, fr.iterations);
+        }
+
+        //Store the metadata for the transaction, adding the timestamp when it was queried.
+        storeMetadata(transactions, userId, time.toString());
+
+        return new AppResponse<>(true, "Files processing complete.", fileResponses);
     }
-
-
 
     private long calculateOriginalSize(String base64String) {
         String sanitized = base64String.replaceAll("\\s+", ""); //Remove whitespaces

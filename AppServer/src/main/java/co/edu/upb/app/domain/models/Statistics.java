@@ -10,19 +10,19 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 public class Statistics {
 
     @XmlElement(name = "totalMB", required = true)
-    private Long totalMB;
+    private Double totalMB;
 
     @XmlElement(name = "date", required = true)
     private String date;
 
     public Statistics() { }
 
-    public Statistics(Long totalMB, String date) {
+    public Statistics(Double totalMB, String date) {
         this.totalMB = totalMB;
         this.date = date;
     }
 
-    public Long getTotalMB() {
+    public Double getTotalMB() {
         return totalMB;
     }
 
@@ -34,7 +34,7 @@ public class Statistics {
         this.date = date;
     }
 
-    public void setTotalMB(Long totalMB) {
+    public void setTotalMB(Double totalMB) {
         this.totalMB = totalMB;
     }
 }

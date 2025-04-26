@@ -12,6 +12,7 @@ import co.edu.upb.app.domain.models.Statistics;
 import com.google.gson.Gson;
 
 import java.net.http.HttpResponse;
+import java.time.Instant;
 
 public class MetricsManager implements IMetricsManager {
 
@@ -24,7 +25,6 @@ public class MetricsManager implements IMetricsManager {
     @Override
     public AppResponse<Boolean> storeMetadata(Transaction data) {
         try {
-            System.out.println(data);
             HttpResponse<String> resp = storage.storeMetadata(data);
             String json = resp.body();
 
@@ -45,9 +45,14 @@ public class MetricsManager implements IMetricsManager {
 
             //parse into the DataDouble class
             Gson gson = new Gson();
+            System.out.println(json);
             DataDouble data = gson.fromJson(json, DataDouble.class);
+
+            System.out.println(data.getData());
+
             return new AppResponse<>(data.getStatus(), data.getMessage(), data.getData());
         } catch (Exception e) {
+            e.printStackTrace();
             return new AppResponse<>(false, "Total conversion couldn't be fetched", 0.0);
         }
     }
@@ -59,10 +64,22 @@ public class MetricsManager implements IMetricsManager {
             HttpResponse<String> resp = storage.getStatistics(userId, startDate, endDate, fileTypeId);
             String json = resp.body();
 
+            System.out.println(json);
+
             //parse into the DataStatistics class
             Gson gson = new Gson();
             DataStatistics data = gson.fromJson(json, DataStatistics.class);
-            return new AppResponse<>(data.getStatus(), data.getMessage(), data.getData());
+            Statistics[] statsData = data.getData();
+
+            if (data.getData().length == 0){
+
+                Instant timestamp = Instant.now();
+                statsData = new Statistics[0];
+
+                System.out.println("NO DATA RETRIEVED " + timestamp.toString());
+            }
+
+            return new AppResponse<>(data.getStatus(), data.getMessage(), statsData);
         } catch (Exception e) {
             return new AppResponse<>(false, "Data couldn't be stored", new Statistics[0]);
         }

@@ -75,7 +75,6 @@ public class AppManager implements InterfaceApp {
     public SOAPConvResponse getURLConversion(String[] urls, Integer userId) {
         AppResponse<ConvertedFile[]> appResponse = this.conversionManager.queueURLConversion(urls, userId);
 
-
         System.out.println("Ejecutando url conversion con timestamp " + getNowTimestamp() + " con message " + appResponse.getMessage());
         return new SOAPConvResponse(appResponse.isSuccess(), appResponse.getMessage(), appResponse.getData(), getNowTimestamp());
     }
@@ -85,7 +84,7 @@ public class AppManager implements InterfaceApp {
     public SOAPDResponse getTotalConversion(Integer userId) {
         AppResponse<Double> appResponse = this.metricsManager.getTotalConversion(userId);
 
-        System.out.println("Ejecutando total conversion con timestamp " + getNowTimestamp() + " con message " + appResponse);
+        System.out.println("Ejecutando total conversion con timestamp " + getNowTimestamp() + " con message " + appResponse.getData());
 
         return new SOAPDResponse(true, "Este es un mensaje de éxito para obtención del total de conversión", appResponse.getData(), getNowTimestamp());
     }

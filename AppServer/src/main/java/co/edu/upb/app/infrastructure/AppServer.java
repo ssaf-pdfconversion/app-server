@@ -14,8 +14,9 @@ public class AppServer {
 
     public void run() {
         try {
-            Endpoint.publish(Environment.getInstance().getDotenv().get("SOAP_URL") +"/appserver", service);
-            System.out.println("App server running");
+            String address = Environment.getInstance().getDotenv().get("SOAP_URL") +"/appserver";
+            Endpoint.publish(address, service);
+            System.out.println("App server running on "+address);
         } catch (Exception e) {
             e.printStackTrace();
         }
