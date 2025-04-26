@@ -205,8 +205,13 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
                             }
                         } catch (RemoteException re) {
                             //Set a default AppResponse, stating that an error occurred with its message for logging purposes.
-                            iters.add(new AppResponse<>(false, re.getMessage(),
-                                    new Iteration(Instant.now().toString(), node.toString(), Instant.now().toString())));
+                            iters.add(
+                                    new AppResponse<>(
+                                            false, re.getMessage(),
+                                            new Iteration(Instant.now().toString(),
+                                                    node.toString(), Instant.now().toString())
+                                    )
+                            );
                         }
 
                         //Set the success of the file conversion.
