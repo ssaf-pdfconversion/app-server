@@ -47,11 +47,11 @@ public class StorageClient implements InterfaceStorage {
         SSLParameters sslParams = new SSLParameters();
         sslParams.setEndpointIdentificationAlgorithm("");
 
-        // 4) Build your HttpClient using that SSLContext
+        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
+
         this.client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .sslContext(sc)
-                .sslParameters(sslParams)
                 .build();
     }
 
