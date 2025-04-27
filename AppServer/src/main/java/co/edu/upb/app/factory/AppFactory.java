@@ -26,7 +26,12 @@ public class AppFactory {
     private InterfaceAuth authStub;
 
     public AppFactory(){
-        StorageClient storageServer = new StorageClient();
+        StorageClient storageServer = null;
+        try {
+            storageServer = new StorageClient();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         this.metricsManager = new MetricsManager(storageServer);
         try {
             this.conversionManager = new ConversionManager(metricsManager);

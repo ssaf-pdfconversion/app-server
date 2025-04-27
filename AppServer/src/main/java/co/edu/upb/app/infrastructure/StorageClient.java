@@ -5,6 +5,11 @@ import co.edu.upb.app.domain.interfaces.infrastructure.InterfaceStorage;
 import co.edu.upb.app.domain.models.storage.Metadata;
 import co.edu.upb.app.domain.models.storage.Transaction;
 import com.google.gson.Gson;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -12,6 +17,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 
 public class StorageClient implements InterfaceStorage {
@@ -19,9 +26,30 @@ public class StorageClient implements InterfaceStorage {
     private final HttpClient client;
     private final String url;
 
-    public StorageClient(){
+    public StorageClient() throws Exception {
         this.url = Environment.getInstance().getDotenv().get("STORAGE_URL");
-        this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+
+        // --- BUILD AN “INSECURE” SSL CONTEXT ---
+        TrustManager[] trustAll = new TrustManager[]{
+                new X509TrustManager() {
+                    public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+                    public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+                    public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                }
+        };
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAll, new SecureRandom());
+
+        // --- DISABLE HOSTNAME VERIFICATION ---
+        SSLParameters sslParams = new SSLParameters();
+        sslParams.setEndpointIdentificationAlgorithm("");
+
+        // --- BUILD YOUR HTTP CLIENT ---
+        this.client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .sslContext(sslContext)
+                .sslParameters(sslParams)
+                .build();
     }
 
     @Override
