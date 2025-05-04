@@ -45,7 +45,7 @@ public class TunerLauncher {
         }
 
         // 3) Wait for nodes to subscribe (existing logic)
-        Thread.sleep(10_000);
+        Thread.sleep(10000);
 
         // 4) Grab subscribed nodes via your new accessor
         List<InterfaceNode> nodes = new ArrayList<>(mgr.getSubscribedNodes());
