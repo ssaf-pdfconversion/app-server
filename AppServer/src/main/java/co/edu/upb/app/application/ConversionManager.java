@@ -16,6 +16,7 @@ import co.edu.upb.node.domain.models.Iteration;
 import co.edu.upb.node.domain.models.NodeReport;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
@@ -26,9 +27,33 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
     private final IMetricsManager metricsManager;
     private final ArrayList<InterfaceNode> nodes;
 
-    public ConversionManager(IMetricsManager metricsManager) throws RemoteException{
+    private double weightCpu;        // a
+    private double weightActive;     // b
+    private double weightQueue;      // c
+    private double weightFileSize;   // d
+
+    public ConversionManager(IMetricsManager metricsManager) throws RemoteException {
+        this(metricsManager, 0.25, 0.25, 0.25, 0.25);
+    }
+
+    public ConversionManager(IMetricsManager metricsManager,
+                             double weightCpu,
+                             double weightActive,
+                             double weightQueue,
+                             double weightFileSize) throws RemoteException {
+        super();
         this.metricsManager = metricsManager;
         this.nodes = new ArrayList<>();
+        setWeights(weightCpu, weightActive, weightQueue, weightFileSize);
+    }
+
+    public void setWeights(double a, double b, double c, double d) {
+        double sum = a + b + c + d;
+        if (sum <= 0) throw new IllegalArgumentException("Sum of weights must be positive");
+        this.weightCpu      = a / sum;
+        this.weightActive   = b / sum;
+        this.weightQueue    = c / sum;
+        this.weightFileSize = d / sum;
     }
 
     @Override
@@ -39,35 +64,38 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
 
     @Override
     public AppResponse<ConvertedFile[]> queueOfficeConversion(OfficeFile[] files, Integer userId) {
-        try{
-            //FIRST: We queue the conversion using the load balancing algorithm
-            //In here, strategy 1 means we're doing an Office conversion. The generic type is gonna be an OfficeFile.
+        Instant start = Instant.now();
+        AppResponse<ConvertedFile[]> result;
+        try {
             AppResponse<List<AppResponse<File>>> response = queueAlgorithm(files, 1, userId);
-
-            ConvertedFile[] convertedFilesArray = getConvertedFiles(response);
-
-            return new AppResponse<>(true, response.getMessage(), convertedFilesArray);
+            ConvertedFile[] arr = getConvertedFiles(response);
+            result = new AppResponse<>(true, response.getMessage(), arr);
         } catch (Exception e) {
             e.printStackTrace();
-            return new AppResponse<>(false, "Office files couldn't be converted", new ConvertedFile[0]);
+            result = new AppResponse<>(false, "Office files couldn't be converted", new ConvertedFile[0]);
         }
+        long durationMs = Duration.between(start, Instant.now()).toMillis();
+        logWeightsAndLatency(durationMs);
+        return result;
     }
 
     @Override
     public AppResponse<ConvertedFile[]> queueURLConversion(String[] files, Integer userId) {
-        try{
-            //FIRST: We queue the conversion using the load balancing algorithm
-            //In here, strategy 2 means we're doing a URL conversion. The generic type is gonna be a String.
+        Instant start = Instant.now();
+        AppResponse<ConvertedFile[]> result;
+        try {
             AppResponse<List<AppResponse<File>>> response = queueAlgorithm(files, 2, userId);
-
-            ConvertedFile[] convertedFilesArray = getConvertedFiles(response);
-
-            return new AppResponse<>(true, response.getMessage(), convertedFilesArray);
+            ConvertedFile[] arr = getConvertedFiles(response);
+            result = new AppResponse<>(true, response.getMessage(), arr);
         } catch (Exception e) {
             e.printStackTrace();
-            return new AppResponse<>(false, "URLs couldn't be converted", new ConvertedFile[0]);
+            result = new AppResponse<>(false, "URLs couldn't be converted", new ConvertedFile[0]);
         }
+        long durationMs = Duration.between(start, Instant.now()).toMillis();
+        logWeightsAndLatency(durationMs);
+        return result;
     }
+
 
     private static ConvertedFile[] getConvertedFiles(AppResponse<List<AppResponse<File>>> response) {
         assert response.isSuccess(); //Response has to be successful
@@ -289,6 +317,32 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
         return ((sanitized.length() * 3L / 4) - padding);
     }
 
+    public List<InterfaceNode> getSubscribedNodes(){
+        return Collections.unmodifiableList(nodes);
+    }
+
+    private <T> Map<InterfaceNode, List<T>> assignByCost(Map<InterfaceNode, Double> baseLoads, List<T> toConvert, int strategy) {
+        Map<InterfaceNode, List<T>> assignment = new HashMap<>();
+        Map<InterfaceNode, Double> dynamicLoads = new HashMap<>(baseLoads);
+        for (T file : toConvert) {
+            long size = (file instanceof String) ? 5000L : calculateOriginalSize(((OfficeFile) file).getFileBase64());
+            long kb = size / 1000;
+
+            // find node with minimal weighted cost
+            InterfaceNode chosen = dynamicLoads.entrySet().stream()
+                    .min(Map.Entry.comparingByValue())
+                    .orElseThrow()
+                    .getKey();
+
+            assignment.computeIfAbsent(chosen, k -> new ArrayList<>()).add(file);
+            // update load: weightCpu * cpu + weightActive * activeTasks + weightQueue * queueLength + weightFileSize * kb
+            double newLoad = dynamicLoads.get(chosen)
+                    + weightFileSize * kb;
+            dynamicLoads.put(chosen, newLoad);
+        }
+        return assignment;
+    }
+
     private <K, V extends Comparable<? super V>> Map<K, V> sortByValueAscending(Map<K, V> map) {
         return map.entrySet()
                 .stream()
@@ -299,5 +353,12 @@ public class ConversionManager extends UnicastRemoteObject implements IConversio
                         (e1, e2) -> e1,
                         LinkedHashMap::new
                 ));
+    }
+
+    private void logWeightsAndLatency(long latencyMs) {
+        System.out.printf(Locale.ROOT,
+                "Weights[a=%.2f, b=%.2f, c=%.2f, d=%.2f] latency=%dms%n",
+                weightCpu, weightActive, weightQueue, weightFileSize, latencyMs);
+        // Optionally append to file as shown in tuner
     }
 }
